@@ -1,0 +1,280 @@
+import { createStore, combineReducers, applyMiddleware, compose } from 'redux'
+
+redux 为什么要把 reducer 设计成纯函数
+    比较两个 javascript 对象中所有的属性是否完全相同，唯一的办法就是深比较，
+    深比较非常耗性能的，需要比较的次数特别多，所以都要返回一个新的对象，得用纯函数
+ 
+redux基本流程：
+    view发起dispatch一个actions到reducer返回一个新的state
+conbimeReducers
+    可以合并多个reducer
+createStore
+    reducer 
+    state 
+    compose(    处理多个store增强器 从右到左依次执行的时候 compose是用reduce原理实现
+            applyMiddleware(thunk, api, createLogger()),   处理中间件 处理好了把action传给下一个中间件
+            DevTools.instrument()                           
+        )
+    compose(fn1, fn2, fn3) (...args) = > fn1(fn2(fn3(...args)))        
+store
+    store.dispatch() store.subscribe()
+    store.getState() store.replaceReucer()
+Provider
+    <Provider store={store}></Provider>
+    与组件通信必要条件之一
+    传入store 连接组件 
+connect   是一个HOC高阶函数
+    与组件通信必要条件之二
+    mapStateToProps  mapDispatchToProps 用来映射
+bindActionCreators(actionCreators, dispatch)
+    让子组件更加方便调用store的方法，不需要dispatch,this.props.actions.方法名直接调用 
+middleware
+    中间件
+applyMiddleware(...middleware)
+    增强器之一：中间件，它就像一个管道，处理各种中间件，组成一个数组,处理完了传递给下一个中间件next(action)
+              最后会store.dispatch(action)
+redux-thunk
+    dispatch时处理action异步
+    首先判断action是否为函数，不是函数把action用next方法传递给下一个中间件
+    在thunk函数里返回一个函数传一个dispatch参数
+    然后返回一个异步请求，请求结束以后dispatch到一个异步的action
+
+redux与flux区别？
+    在redux中我们只能定义一个store，在flux中我们可以定义多个 
+如何在 React 中使用 Redux?
+    答案：通过Provider  connect 
+         为什么是 connect(mapStateToProps)(Counter) 写成这样()()
+         connect 是一个HOC高阶函数 ，传入一个组件时， 返回一个新组件。        
+Redux：
+  reducer ：
+        纯函数，只承担计算 State ，返回新state，纯函数不能读写操作。
+        const reducer = (state = {count: 0}, action) => {
+            switch (action.type){
+                case 'DECREASE': return {count: state.count - 1};
+                default: return state;
+            }
+        }
+  actions:
+        const actions = {
+            increase: () => ({type: 'INCREASE'}),
+            decrease: () => ({type: 'DECREASE'})
+        }
+        为什么要新建一个js文件，用const定义type ？
+            因为type写错了没有报错，用const定义一次会报错；         
+  createStore(reducer, [initState, enhancer])
+        initStatate：  初始state。如果不为空，需要和reducer中处理的state结构一致
+        enhancer：     store增强器
+        const store = createStore(
+            rootReducer,
+            initStatate,
+            compose(     //多个store增强器 从右到左依次执行的时候 compose是用reduce原理实现
+                applyMiddleware(thunk, api, createLogger()),    
+                        //增强器之一：中间件，它就像一个管道，里面都是中间件，组成一个数组，依次执行，
+                DevTools.instrument()                           
+                        //增强器之二  react－devtools调试
+            )
+        )
+  store：
+        store.dispatch()：分发action  根据action.type更新state 变更后，依次执行listener中所有响应函数
+        store.subscribe()：观察者模式 注册维护listener数组，监听state变化  
+        store.getState()：读取store tree中所有state
+        store.replaceReucer()：替换reducer，改变state更新逻辑
+
+
+
+
+
+
+
+
+
+  combineReducers(reducers)
+        多个reducer合并在一起
+        let arr=combineReducers({ user: user, company: company });
+        export default createStore(arr);
+  Provider:
+        将store跟组件联系起来
+        ReactDOM.render(<Provider store={store}>
+                            <App />
+                        </Provider>, document.getElementById('root'));
+  connect 方法：
+        mapStateToProps：  映射store  用this.props.count获取
+            const mapStateToProps = (state,ownProps) => {
+                return { 
+                    value: state.count          
+                }
+            } 
+        mapDispatchToProps  映射action this.props.方法名获取
+            直接解构出来  const {count, increase, decrease} = this.props;
+            不用bindActionCreators情况：
+                const mapDispatchToProps = (dispatch, ownProps) => {
+                    return {
+                        increase: (...args) => dispatch(actions.increase(...args)),
+                        decrease: (...args) => dispatch(actions.decrease(...args))
+                    }
+                } 
+        const VisibleTodoList = connect(
+            mapStateToProps,        
+            mapDispatchToProps      
+        )(TodoList)  
+
+
+
+
+
+
+
+
+
+
+        
+  bindActionCreators(actionCreatore,dispatch) 
+        使用场景：  惟一会使用到 bindActionCreators 的场景是当你需要把 action creator 往下传到一个组件上，
+                  却不想让这个组件觉察到 Redux 的存在，而且不希望把 dispatch 或 Redux store 传给它。
+                  可以直接调用在props： this.props.actions.actionCreator1()
+        不使用bindActionCreators情况：
+            connect((state)=> ({order: state.order})),
+                (dispatch) => ({
+                    actions: bindActionCreators({
+                        actionCreator1: actionCreator1,
+                        actionCreator2: actionCreator2
+                }),dispatch)
+        使用后：
+            connect((state)=> ({order: state.order})),
+            (dispatch) => ({
+                actions: {
+                    actionCreator1: () => dispacth(actionCreator1()),
+                    actionCreator2: () => dispacth(actionCreator2())
+            }}))
+        也可以把方法传递给子组件，子组件也不需要dispatch，直接this.props.actions.actionCreator1()调用    
+
+
+
+compose(...functions)     
+        compose(fn1, fn2, fn3) (...args) = > fn1(fn2(fn3(...args)))
+        1. 函数式编程中的方法，当需要把多个 store增强器 依次执行的时候，需要用到它。
+                在多个方法组合调用时，可以使用redux的compose解决方法
+        2. 原理：
+            借助于reduce实现 compose(fn1, fn2, fn3) (...args) = > fn1(fn2(fn3(...args)))
+            reduce原理：接收一个函数作为累加器，最终计算为一个值。。从右到左来组合多个函数。
+        3. 里面的函数用逗号分开 一一执行 做的只是让你不使用深度右括号的情况下来写深度嵌套的函数。不要觉得它很复杂。
+        let devtools = () => noop => {
+                console.log(noop);
+                return noop;    
+            };
+        const enhancers = [
+            applyMiddleware(...middleware),
+            devtools()
+        ];
+        createStore(reducers, initialState, compose(...enhancers)); 
+
+
+
+
+
+
+
+
+
+
+middlewares（中间件）？ 
+        原理：是纯函数 执行action之前执行一个中间件，处理一些事情，
+        流程：action-->middleware1-->middleware2-->……-->reducer 
+        比如打印 方法如下：
+            const next = store.dispatch;
+            store.dispatch = function (action) {      
+                let action = toggleTodo('2');
+                console.log('dispatch', action);      // dispatch一个action之前做一点事情    
+                next(action);                        // 这里用dispatch了一个action
+                console.log(store.getState());      // 打印了执行action之后的新state
+            } 
+applyMiddleware(...middlewares)： 
+    原理：
+        1. applyMiddlewares 传入多个中间件，
+        2. 将所有中间件组成一个数组，依次执行，
+        3. compose合并新中间件数组 并传入dispatch
+        4. 最后返回store对象
+        5. 它是 Redux 的原生方法，作用是将所有中间件组成一个数组，依次执行
+        6. action传递过来的数据被一个中间处理后传递给下一个中间件处理，最后再给reducer处理。
+        7. 每个中间件可以调用dispatch和getState方法。
+    作用：
+        增强creatStore方法的 store增强器之一。   
+    源码：    
+        export default function applyMiddleware(...middlewares) {
+            return (createStore) => (reducer, preloadedState, enhancer) => {
+                var store = createStore(reducer, preloadedState, enhancer);
+                var dispatch = store.dispatch;
+                var chain = [];
+            
+                var middlewareAPI = {
+                    getState: store.getState,
+                    dispatch: (action) => dispatch(action)
+                };
+                chain = middlewares.map(middleware => middleware(middlewareAPI));  
+                dispatch = compose(...chain)(store.dispatch);            
+            
+                return {...store, dispatch}
+            }
+        } 
+    applyMiddleware(logger)(createStore);        
+    
+
+
+  
+
+
+
+
+
+
+  
+
+redux-thunk是什么？ 
+    初衷：
+        action 创建函数和网络请求结合起来呢
+    原理：
+        可以在actionCreators里通过返回一个函数，然后就可以在函数里编写某些异步操作了，
+        待异步操作结束，最后通过传入的store.dispatch，发出action通知给Store要进行状态更新。
+    如何引入：
+        const store = createStore(
+            reducer,
+            initialState,
+            applyMiddleware(thunk，middleware1, middleware2)
+        );
+
+    具体用法：
+        //store.js
+            import thunk from 'redux-thunk';
+            const initialState = {};
+            const reducer = function(state={}, action){ return state };
+            const store = createStore(reducer, initialState, applyMiddleware(thunk));
+
+        //action.js 必须是一个函数
+            export function getData(dispatch, getState) {
+                const state = getState();
+                dispatch(loadingAction);
+                ajax('/getData').then(res => {
+                    dispatch(successAction);
+                }).catch(err => {
+                    dispatch(errorAction);
+                });
+            }
+
+        //index.js业务组件代码
+            import { getData } from './actions.js';
+
+            class MyComponent extends Component {
+                handleClick() {
+                    getData();
+                }
+            }
+
+
+
+
+
+ 
+
+   
+
+ 

@@ -1,0 +1,283 @@
+react  常见面试题 https://www.jianshu.com/p/4357c4ae99eb
+
+React组件设计推崇的是“组合”，而非“继承”。
+
+如何设计一个好的组件？
+    高内聚，低耦合
+    使用hoc模式。高级组件应该继承自基础款的组件，而不是重写
+
+immutable
+    Immutable.fromJS({
+        b: 1,
+        c: {
+            c1: 123
+        }
+    });
+    当 state 更新时，如果数据没变，也会去更新虚拟dom做比较，浪费性能
+    immutable.js 可以解决这个问题。因为每一次 state 只要有数据改变才会更新
+    对Immutable对象的任何操作（添加、修改、删除）都会生成一个新的Immutable对象。它就不可变的一种数据结构。持久化数据结构
+    节省内存  会尽量复用内存，甚至以前使用的对象也可以再次被复用。没有被引用的对象会被垃圾回收
+    并发安全   数据天生是不可变的，并发锁就不需要了。
+    Immutable 本身就是函数式编程中的概念，纯函数式编程比面向对象更适用于前端开发。因为只要输入一致，输出必然一致
+    数据类型：
+        Map：键值对集合，对应Object。
+        List：可重复的有序列表。对应Array。
+        Set：不重复并且无序的列表。
+    API：
+        formJS()默认将原生 JS 的 Array 转为 List ， Object 转为 Map        
+        
+    虽然map很好用，但是map只能执行一层，我们对2级更新属性会报错，需要是使用fromjs来处理对象
+    设置值 一层使用set，多层使用setIn
+    取值：一层使用get，多层使用getIN
+
+    let obj1 = fromJS({ name: 'leo', age: 12, home: { name: 'shenzhen' } })
+    let obj2 = obj1.set('name', 'hello')
+    let obj3 = obj1.setIn(['home', 'name'], 'new Name') 
+
+
+
+
+
+render 渲染逻辑
+    React会调用render函数构建一棵Dom树，在state/props发生改变的时候，
+    render函数会被再次调用渲染出另外一棵树，接着，React会用对两棵树进行对比，找到需要更新的地方批量改动。
+
+ 
+
+
+react hooks：
+    解决的痛点：
+        1. 难以重用和共享组件中的与状态相关的逻辑
+        2. 逻辑复杂的组件难以开发与维护
+    只能在顶层调用Hooks 。不要在循环，条件或嵌套函数中调用Hook
+    只能在functional component中使用
+    useState 和 useEffect
+ 
+
+
+React解决了什么问题
+    不需要操作dom
+    单项数据流
+    代码的调试和维护更加简单
+    复用组件
+组件的Render函数在何时被调用？
+    每一次的state更改都会使得render函数被调用，但页面的DOM不一定会发生修改
+    将Virtual DOM和Real DOM进行对比，找出需要更新的最小步骤，此时Real DOM才可能发生修改。
+调用时DOM就一定会被更新吗？
+当某些第三方类库想对DOM初始化，或者进行远程数据加载时，应该在哪个周期中完成？
+    componentDidmount
+
+      
+不同父节点的组件需要对彼此的状态进行改变时应该实现？
+如何设计出一个好的Flux架构
+如何设计出一个好的React组件
+如何进行组件优化？
+    1. 重写 shouldComponentUpdate 函数，手动控制是否应该调用 render 函数进行重绘
+    2. 尽可能的使用 Immutable Data  尽可能的不修改数据，而是重新赋值数据。
+        在检测数据对象是否发生修改方面会非常快，只需要检测对象引用即可，而不用挨个的检测对象属性的更改
+    3. 在渲染组件的时候尽可能的添加key  不过是组件级别的，用于标记元素的唯一性。        
+
+ 
+如果你使用过Redux与Vuex的话，聊聊他们的区别与你的心得
+    1. React代码打包之后相对较大，基本是300KB起跳；而Vue和Vuex框架代码则相对较小，基础库能维持在100KB左右。
+    2. Vuex中保留了action与store的概念，action和mutation都是提交对store修改，mutation是同步的，为了追踪数据，异步追踪不到
+webpack打包时如何工作的？
+    1. 初衷是用于模块打包，解决模块间的兼容性问题
+    2. webpack高级用法：开发过Webpack的plugin我觉得算是一项加分点
+    3. 一个模块有依赖的话，在所有依赖模块没有加载完之前他是不会执行的
+    4. 打包原理：
+        首先Webpack需要有一个入口模块，entry。通过对入口模块进行语法分析，注入依赖分析，找到模块的依赖。
+        此时Webpack应该会有一个HashMap，key为模块的路径或者名称，而value则为模块的工厂代码或者具体内容。
+        HashMap主要有两个作用：
+            缓存：可能存在一个模块被多次引用的情况
+            标记：模块是否被加载
+        Webpack则针对入口模块以深度优先的原则逐个将依赖模块进行加载。最后将入口模块自己打包进bundle中。
+
+如何解决循环引用的问题
+在什么情况下需要打包输出多个文件？
+loader和plugin的差别
+你觉得使用过什么高级技巧吗？
+（开放问题）React的生态你使用过哪些类库
+
+
+在哪些声明周期中可以修改组件的state？
+    可以执行：
+        conponentWillReceiveProps：
+            不会造成二次渲染。由于只有 props 的变化才会触发 componentWillReceiveProps 事件，
+            因为在这个事件里 setState 不会造成不停触发组件更新的死循环，可以放心在这个函数里 setState。
+    尽量避免：
+        componentDidmount ：
+            会导致组件刚刚完成更新，又要再更新一次，连续渲染两遍    
+    无意义:
+        componentWillMount   componentWillUmmount  ：
+            会和 constructor 里的初始化 state 合并执行，因此这是无意义的              
+    禁止：
+        shouldComponentUpdata   componentWillUpdata componentDidUpdate：
+            这里调用 setState 会再次触发这两个函数，然后在两个函数又触发了 setState，
+            不停触发组件更新的死循环里，会导致浏览器内存耗光然后崩溃 
+
+
+
+生命周期：
+    初始化部分：
+        constructor 
+            初始化state 用来绑定实践   
+        getDefaultProps
+            父组件传递过来的props
+        getInitialState
+            可以在constructor里面定义this.state,此时可以使用this.props   
+        componentWillMount
+            整个生命周期只调用一次，此时可以通过this.setState修改state
+        render
+            创建虚拟dom，进行diff算法，更新dom树，此时不能更改state了
+            如果有操作DOM或者和浏览器打交道的一系列操作，请在下一步
+        componentDidmount         
+            组件渲染之后调用，整个生命周期只调用一次 可以async
+            操作DOM、或者请求异步数据，都应该放在这个步骤中做
+    更新部分：
+        conponentWillReceiveProps(nextProps)
+            当从父类接收到 props 并且在调用另一个渲染器之前调用。 组件接受到新的porps时调用 
+            setState方法设置state
+        shouldComponentUpdata(nextProps,nextState)
+            性能优化非常重要，可以避免不必要的渲染
+            组件接受新的state或props时调用
+            可以在这里对比新旧属性，判断是否需要更新，避免多余的diff算法，提高性能
+        componentWillUpdata
+            在组件更新时才调用，此时可以修改state
+        render
+            更新准备好以后渲染
+        componentDidUpdata
+            跟componentDidmount类似  执行DOM操作以及发起网络请求             
+    卸载：
+        componentWillUmmount   组件将要卸载，一些事件的监听和定时器在这清除   
+
+
+
+JSX 的基本语法规则：遇到 HTML 标签（以 < 开头），就用 HTML 规则解析；遇到代码块（以 { 开头），就用 JavaScript 规则解析。
+所以给jsx添加注释只要这样子：  {/* 。。。 */}
+
+
+react和vue比较来说有什么区别
+    1 component层面，web component和virtual dom
+    2 数据绑定（vue双向，react的单向）等好多
+    3 计算属性 vue 有，提供方便；而 react 不行
+    4 vue 可以 watch 一个数据项；而 react 不行
+    5 vue 由于提供的 direct 特别是预置的 directive 因为场景场景开发更容易；react 没有
+    6 生命周期函数名太长
+
+props 和单向数据流。数据通过 props 在组件树间向下传递。
+要想数据向上传递，需要通过回调函数实现，因此必须首先将回调函数向下传递到任何想通过调用它来传递数据的组件中。
+Redux DevTools 检查每一个 state 的变化），time-travel debugging（你可以回滚 state 变化，看看你的应用以前的样子）
+
+setState
+    1. 是异步 setTimeout包裹下是同步:
+    2. 基于event loop的模型下，setTimeout 中里去 setState 总能拿到最新的state值。        
+    3.setState并不会立即改变state的值，而要想数据向上传递，需要通过回调函数实现，
+        因此必须首先将回调函数向下传递到任何想通过调用它来传递数据的组件中。
+        是将其放到一个任务队列里，最终将多个setState合并，一次性更新页面。 
+多次setState会合并为什么会合并?
+    主要是setState触发页面重新渲染， 需要经过以下生命周期：
+        shouldComponentUpdate
+        componentWillUpdate
+        render
+        componentDidUpdate
+    其实state的值只有在render的时候才真正被修改了        
+React 中 key 的重要性是什么？
+    key 用于识别唯一的 Virtual DOM 元素及其驱动 UI 的相应数据。
+    它们通过回收 DOM 中当前所有的元素来帮助 React 优化渲染。这些 key 必须是唯一的数字或字符串，
+    React 只是重新排序元素而不是重新渲染它们。这可以提高应用程序的性能。
+react创建组件三种方式：
+    1. 纯函数式定义的无状态组件
+    2. React.createClass 定义的组件
+    3. extends React.Component 定义的组件
+函数式组件:
+    1. 组件不会被实例化,整体渲染性能得到提升
+    2. 组件不能访问this对象
+    3. 组件无法访问生命周期的方法
+    4. 无状态组件只能访问输入的props,无副作用    
+类组件:
+    1. 直接用this   2. 有自己的生命周期    
+
+
+
+
+设置默认值：  // 编译过才实现
+static defaultProps = {
+    propsName1: value1,
+    propsName2: value2,
+    ...
+}
+HelloMessage.defaultProps = {      //用组件名设置  通过赋值特定的 defaultProps 属性为 props 定义默认值：
+    name: '我是props的默认值！'
+};
+
+react hash路由 页面刷新参数弄丢  使用qs，sessionstorage 和 localstorage 储存都可以实现
+
+ 
+
+点击事件用法：
+    onClick={ () => this.handleClick('name1') }  //传递参数用箭头函数
+    onClick={ () => this.handleClick('name2') }
+    onClick={ () => this.handleClick('name3') }
+    onClick={ this.handleClick() }      //无需传参
+
+handleClick = (type) => {       //传递的参数可以用[]的方式 再setState里面使用
+    this.setState({
+        [type]:true
+    })
+}
+
+jsx语法糖： <script type="text/babel">
+    render(){
+        let div=<div style={{color: 'red'}}>bbbb</div>;
+        return (
+            <div>
+                <label htmlFor="user" className="bgColor" 
+                    onClick={this.fn.bind(this,userName)}>用户名：</label>
+                {div}
+            </div>
+        );
+    }
+</script> 
+
+ 
+
+    提取父组件传来的arr  通过数组map方法循环出标签
+    {this.props.arr.map((str,index)=><Child ref="child1" txt={str} key={index}><span>123</span></Child>)}
+    可以用this.props.txt获取父组件传递给他的值
+
+    <Child ref="child1" parent={this}/>
+    this.props.parent.add(11)    子组件拿父组件的add方法
+    this.refs['child1'].add(7);  父组件拿子组件里面的add方法
+    let { age } = this.props;   子组件 接受 父组件属性 
+    let {data}=await axios.get(`add/${name}/${price}/${count}`);
+
+使用Component还是PureComponent:
+    PureComponent具有一个浅比较的shouldComponentUpdate方法 对props和state进行浅比较
+
+react的权限设置：
+    所有的api接口请求都带上这个TOKEN，后台拿到TOKEN就知道用户身份，也就知道该用户有哪些权限！
+    用户在退出的时候，你删除本地的TOKEN！
+
+fiber架构:
+    相比以前的递归更新组件优势：
+        递归更新组件会让js调用栈 占用很长时间
+    分段渲染原理：
+        浏览器单线程，优化js代码  将组件渲染分段执行 提高执行效率
+        fiber架构拥有return child sibling三个属性  变成链表 深度优化遍历
+    怎么决定每次更新数量：
+        规定一个时间段内，能转换多少个fiberNode就转换多少个，拿规定时间去判断，超过了进入下一个更新阶段
+        第一阶段：虚拟dom ＝> fiber节点
+        第二阶段：fiber节点 ＝> 组件实例 或 真实dom
+    怎么调度时间才保证流畅：
+        使用浏览器自带的api：
+            requestIdleCallback
+    受控组件：
+        必须有onchange方法 获取input的值 使用 e.target.value
+    非受控组件：
+        通过ref操作dom
+    状态提升：
+        两个子组件的共同状态 提升至最近的共同的父组件管理                       
+
+react实现双向绑定：
+    input绑定onchange事件  事件里改变setState，实现双向绑定

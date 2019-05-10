@@ -1,0 +1,36 @@
+--save   <=> -S            运行上线依赖
+
+--save-dev  <=> -D         开发依赖
+
+yarn add fetch-jsonp   跨域
+
+redux插件：  两者都是必须安装
+    1.  chrome商店里面的redux插件
+    2.  yarn add redux react-redux redux-devtools-extension  --save
+
+yarn add reacr-router-dom
+    HashRouter BrowerRouter
+    Route: path exact component  render
+    NavLink Link
+    Swith
+    Redirect     
+
+
+yarn add monent --save
+    如果使用时间控件报错了  需要一个must be a monent object
+
+
+插件工具降级命令：
+    yarn add redux@1.0.0 --save
+
+
+
+函数 数组 对象  对象合并  数组合并  继承
+agsement
+...rest
+assgin
+connct
+...data[myfN]
+
+
+

@@ -1,0 +1,249 @@
+npm i react-router-dom -- save
+
+BrowserRouter:
+    原理是使用了history API  pushState  replaceState  popState
+    basename
+        如果你的文件放在服务器的二级目录下则可以使用它。
+    <BrowserRouter baseName='/ccc'>
+        <Route path='/' component={Home}>
+    </BrowserRouter>
+
+
+Redirect:
+    <Redirect to='/admin/home' /> 重定向
+ 
+
+
+
+route：
+    route是配置，link是使用
+    Home.js:
+        <div>
+            <ul>
+                <li><Link to="/home">首页</Link></li>
+                <li><Link to="/other">其他页</Link></li>
+            </ul> 
+            { this.props.children }
+        </div> 
+
+    router.js                // 路由跳转占位 始终在路由表里控制
+        <BrowserRouter>
+            <Home>    
+                <Switch>
+                    <Route path="/main" render={ ()=>
+                        <Main>
+                            <Route path="/main:id" component={aaa}/>
+                        </Main>
+                     } />
+                    <Route path="/home" component={Home}/>
+                    <Route exact path="/home/abc" component={Home}/>
+                    <Route path="/other" component={Other}/>
+                </Switch>    
+            </Home>            
+        </BrowserRouter>            
+            
+
+Link:
+    <Link to="/three/7">
+    <Link to={{
+        pathname: '/courses',
+        search: '?sort=name',      问号参数
+        hash: '#the-hash',
+        key:'aaa',
+        state: {
+          fromDashboard: true
+        }
+      }} />
+
+
+NavLink:
+    <NavLink activeClassName='select' to='/second/123'></NavLink>
+    下面配一个
+    <Route exact to='/second/:id'></Route>
+    <Route path='/asdads' component={NoMatch}/>  路由不存在
+
+
+
+exact
+    用于严格匹配，匹配到/则不会继续向下匹配
+
+
+match：
+    this.props.match来获取match之中的信息
+    this.props.match.url
+    this.props.match.path
+    this.props.match.isExact
+    this.props.match.params.id
+
+
+
+Switch
+    只匹配一个路由  　（如果出现多个组件一起渲染出来的问题，就用Switch包一下  匹配到一个路由以后 就会break 不会再往下匹配）
+      <Switch>
+        <Route path='/admin/ui/buttons' component={Buttons}/>
+        <Route path='/admin/ui/loading' component={Loading}/>
+        <Route path='/admin/ui/tabs' component={Tabs}/>
+      </Switch>        
+ 
+withRouter：
+    export default withRouter(connect()(組件)) 
+      如果不使用withRouter此组件的this.props为空，没法执行props中的history、location、match等方法。 
+      将react-router 的 history、location、match 三个对象传入props对象
+      如果使用了react-router-redux,则可以直接从state 中的router属性中获取location。不需要再使用withRouter 获取路由信息了
+      一般是首页，不是通过路由跳转过来的，而是直接从浏览器中输入地址打开的，    
+
+
+      router.js:
+          第一种写法
+          <Home>       只有一个主页面 而且是最高层  一般都有平级页面  
+              <Route exact={true} path='/' component={Main}/></Route>      exact  精准匹配
+              <Route path='/about' component={About}/></Route>
+          </Home>
+
+          第二种写法： （嵌套路由，main组件里面还要组件aaa的情况下）
+          <div>        用div包裹，有多个平级页面 比如登陆页面  详情页面    常用！！！
+              <Switch>         
+                  <Route path='/main/a' render={()=>
+                      <Main>
+                          <Route path="/main/a" component={AAA}></Route>
+                      </Main>
+                  }/></Route>
+                  <Route path='/about' component={About}/></Route>
+                  <Route component={NoMatch}/></Route>      建一个NoMatch组件 写上404样式就行
+               </Switch>                
+          </div>
+
+
+ 
+<Provider store={store}>
+    <BrowserRouter>
+      <Switch>
+        <Route path="/" exact     render={() => (<h1>111111</h1>)} />
+        <Route path="/auth"       component={UnauthorizedLayout} />
+        <Route path="/app"        component={PrimaryLayout} />
+        <Route path='/main/a'     render={()=>
+              <Main>
+                  <Route path="/main/a" component={AAA}></Route>
+              </Main>
+          }>
+        </Route> 
+      </Switch>
+    </BrowserRouter>
+  </Provider> 
+ 
+  
+
+
+          
+
+ 
+
+
+
+history
+  this.props.history.push('/plan') 
+  go  
+    go-back => go(-1) 回退到上一個地址
+    go-forward =>go(1) 向前走一步
+
+location 獲取當前哈希路由渲染組件的一些信息 
+  pathname: 当前hash路由地址
+  search :  当前页面问号参数传值
+  state:    基於redirect/link/nav-link中的to,傳遞的是一個對象,對象中編寫state,就可以再location.state中獲取
+  match :   获取当前路由匹配的一些结果
+
+ 
+
+ 
+      
+
+react的路由守卫怎么做？
+    后端返回路由表与权限信息 还有按钮权限信息  然后前端循环判断  高阶组件封装一下
+    不需要守卫的：
+        import * as React from 'react';
+        import { HashRouter,Switch,Route,Redirect } from 'react-router-dom';
+        import { HomePage } from '../pages/home/home.page';
+        import { LoginPage } from '../pages/login/login.page';
+        import { ErrorPage } from '../pages/error/error.page';
+
+        export const Router = () => (
+            <HashRouter>
+                <Switch>
+                    <Route path="/" exact component={HomePage}/>
+                    <Route path="/login" exact component={LoginPage}/>
+                    <Route path="/home" exact component={HomePage}/>
+                    <Route path="/404" exact component={ErrorPage}/>
+                    <Redirect to="/404" />
+                </Switch>
+            </HashRouter>
+        );
+    需要守卫的用hoc组件包一层判断：        
+        <HashRouter>
+            <Switch>
+                <FrontendAuth config={routerConfig} />
+            </Switch>
+        </HashRouter>
+        FrontendAuth：
+            import * as React from 'react';
+            import { Route,Redirect } from 'react-router-dom';
+            import { propsModel } from './frontend-auth.model'
+
+            export class FrontendAuth extends React.Component<any,propsModel>{
+                render(){
+                    const { location,config } = this.props;
+                    const { pathname } = location;
+                    const isLogin = localStorage.getItem('__config_center_token')
+                    
+                    // 如果该路由不用进行权限校验，登录状态下登陆页除外
+                    // 因为登陆后，无法跳转到登陆页
+                    // 这部分代码，是为了在非登陆状态下，访问不需要权限校验的路由
+                    const targetRouterConfig = config.find((v:any) => v.path === pathname);
+                    if(targetRouterConfig && !targetRouterConfig.auth && !isLogin){
+                        const { component } = targetRouterConfig;
+                        return <Route exact path={pathname} component={component} />
+                    }
+
+                    if(isLogin){
+                        // 如果是登陆状态，想要跳转到登陆，重定向到主页
+                        if(pathname === '/login'){
+                            return <Redirect to='/' />
+                        }else{
+                            // 如果路由合法，就跳转到相应的路由
+                            if(targetRouterConfig){
+                                return <Route path={pathname} component={targetRouterConfig.component} />
+                            }else{
+                                // 如果路由不合法，重定向到 404 页面
+                                return <Redirect to='/404' />
+                            }
+                        }
+                    }else{
+                        // 非登陆状态下，当路由合法时且需要权限校验时，跳转到登陆页面，要求登陆
+                        if(targetRouterConfig && targetRouterConfig.auth){
+                            return <Redirect to='/login' />
+                        }else{
+                            // 非登陆状态下，路由不合法时，重定向至 404
+                            return <Redirect to='/404' />
+                        }
+                    }
+                }
+            }
+
+
+
+
+阻止页面离开怎么做？
+     componentWillMount () {
+        // 拦截判断是否离开当前页面
+        window.addEventListener('beforeunload', this.beforeunload);
+    }
+    componentWillUnmount () {
+        // 销毁拦截判断是否离开当前页面
+        window.removeEventListener('beforeunload', this.beforeunload);
+    }
+    beforeunload (e) {
+        let confirmationMessage = '你确定离开此页面吗?';
+        (e || window.event).returnValue = confirmationMessage;
+        return confirmationMessage;
+    }
+    Prompt:
+    <Prompt when={true} message="您确定要离开当前页面吗？"/>
